@@ -1,8 +1,7 @@
 {
-  "/login/page": "app/login/page.js",
   "/page": "app/page.js",
-  "/onboard/page": "app/onboard/page.js",
-  "/products/page": "app/products/page.js",
+  "/login/page": "app/login/page.js",
   "/reports/page": "app/reports/page.js",
-  "/api/users/route": "app/api/users/route.js"
+  "/onboard/page": "app/onboard/page.js",
+  "/products/page": "app/products/page.js"
 }
