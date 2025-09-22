@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { getFirebaseAuth } from '@/lib/firebaseClient';
+import { getFirebaseAuth, syncUserWithDatabase } from '@/lib/firebaseClient';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,8 +36,20 @@ export default function Page() {
       const u = userCred.user;
       await updateProfile(u, { displayName: email });
       await sendEmailVerification(u);
-      // create basic profile record in Neon via API (will be updated when store is created)
-      await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: u.uid, email: u.email }) });
+
+      // Sync user with database using the enhanced sync function
+      try {
+        await syncUserWithDatabase(u);
+        console.log('✅ User synchronized with database during registration');
+      } catch (syncError) {
+        console.error('❌ Failed to sync user with database during registration:', syncError);
+        // Don't fail registration if database sync fails - user can still proceed
+        toast({
+          title: "Account Created",
+          description: "Account created successfully. You may need to refresh the page if you encounter issues.",
+          variant: "default",
+        });
+      }
 
       toast({
         title: "Account Created Successfully!",

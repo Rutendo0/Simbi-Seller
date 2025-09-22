@@ -123,3 +123,68 @@ export function getFirebaseAuth() {
     return null;
   }
 }
+
+// Enhanced user synchronization function with retry logic
+export async function syncUserWithDatabase(user: any, retries = 3) {
+  if (!user || typeof window === 'undefined') return;
+
+  let attempt = 0;
+
+  while (attempt < retries) {
+    try {
+      console.log(`🔄 Syncing user with database (attempt ${attempt + 1}/${retries}):`, user.uid);
+
+      // Check if user already exists in database
+      const checkResponse = await fetch(`/api/users?uid=${user.uid}`);
+      const checkData = await checkResponse.json();
+
+      if (!checkResponse.ok) {
+        console.error('❌ Failed to check user in database:', checkData);
+        throw new Error(checkData.error || 'Failed to check user in database');
+      }
+
+      // If user doesn't exist in database, create them
+      if (!checkData.user) {
+        console.log('📝 User not found in database, creating...');
+
+        const createResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+          }),
+        });
+
+        const createData = await createResponse.json();
+
+        if (createResponse.ok) {
+          console.log('✅ User created in database:', user.uid);
+          return createData.user;
+        } else {
+          console.error('❌ Failed to create user in database:', createData);
+          throw new Error(createData.error || 'Failed to create user');
+        }
+      } else {
+        console.log('✅ User already exists in database:', user.uid);
+        return checkData.user;
+      }
+    } catch (error: any) {
+      attempt++;
+      console.error(`❌ Error syncing user with database (attempt ${attempt}/${retries}):`, error.message);
+
+      if (attempt >= retries) {
+        console.error('❌ All retry attempts failed for user sync');
+        throw new Error(`Failed to sync user after ${retries} attempts: ${error.message}`);
+      }
+
+      // Wait before retry with exponential backoff
+      const delay = Math.pow(2, attempt) * 1000;
+      console.log(`⏳ Retrying user sync in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}

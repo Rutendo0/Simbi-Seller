@@ -36,7 +36,7 @@ export default function Page() {
         // check if user has a store
         const res = await fetch('/api/users?uid=' + encodeURIComponent(auth.currentUser.uid));
         const data = await res.json();
-        if (data.user && data.user.store_name) {
+        if (data.user && (data.user.storeName || data.user.store_name)) {
           // user has a store, go to dashboard
           window.location.href = '/';
         } else {

@@ -236,3 +236,77 @@ export async function healthCheck() {
     };
   }
 }
+
+// Migration function to sync existing Firebase users with database
+export const userMigration = {
+  async syncExistingUsersWithDatabase() {
+    const client = await dbPool.connect();
+    try {
+      console.log('🔄 Starting user migration to sync existing Firebase users...');
+
+      // Get all users from database
+      const dbUsers = await client.query('SELECT uid, email, created_at FROM users');
+      const dbUserMap = new Map(dbUsers.rows.map(user => [user.uid, user]));
+
+      console.log(`📊 Found ${dbUsers.rows.length} users in database`);
+
+      // For now, we'll create a placeholder function that can be called
+      // when we have access to Firebase Admin SDK or user list
+      // This is a starting point for the migration
+
+      return {
+        success: true,
+        message: `Database ready for migration. Found ${dbUsers.rows.length} existing users.`,
+        dbUserCount: dbUsers.rows.length
+      };
+
+    } catch (error: any) {
+      console.error('❌ Migration error:', error);
+      throw new Error(`Migration failed: ${error.message}`);
+    } finally {
+      client.release();
+    }
+  },
+
+  async createUserFromFirebaseData(userData: {
+    uid: string;
+    email: string;
+    displayName?: string;
+  }) {
+    const client = await dbPool.connect();
+    try {
+      console.log('📝 Creating user from Firebase data:', userData.uid);
+
+      const query = `
+        INSERT INTO users (
+          uid, email, display_name, profile_json, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, NOW()
+        )
+        ON CONFLICT (uid) DO UPDATE SET
+          email = EXCLUDED.email,
+          display_name = EXCLUDED.display_name,
+          profile_json = EXCLUDED.profile_json,
+          updated_at = NOW()
+        RETURNING *;
+      `;
+
+      const values = [
+        userData.uid,
+        userData.email,
+        userData.displayName || null,
+        JSON.stringify(userData)
+      ];
+
+      const result = await client.query(query, values);
+      console.log('✅ User created/updated from Firebase data:', userData.uid);
+      return result.rows[0];
+
+    } catch (error: any) {
+      console.error('❌ Error creating user from Firebase data:', error);
+      throw new Error(`Failed to create user: ${error.message}`);
+    } finally {
+      client.release();
+    }
+  }
+};

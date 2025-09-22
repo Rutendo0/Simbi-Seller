@@ -1,4 +1,4 @@
-// File: c:\Users\user\OneDrive\Desktop\Simbi-Seller\app\api\users\route.ts
+// File: C:\Users\user\OneDrive\Desktop\Simbi-Seller\app\api\users\route.ts
 import * as entry from '../../../../../app/api/users/route.js'
 import type { NextRequest } from 'next/server.js'
 

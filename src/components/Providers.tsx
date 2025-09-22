@@ -9,11 +9,21 @@ import { UserProvider } from "@/hooks/useUser";
 import { initFirebase } from "@/lib/firebaseClient";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 1,
+      },
+    },
+  }));
 
   // Initialize Firebase once at the app level
   React.useEffect(() => {
-    initFirebase();
+    // Only initialize on client side
+    if (typeof window !== 'undefined') {
+      initFirebase();
+    }
   }, []);
 
   return (

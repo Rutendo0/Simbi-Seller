@@ -1,10 +1,12 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { getFirebaseAuth } from '@/lib/firebaseClient';
+import { getFirebaseAuth, syncUserWithDatabase } from '@/lib/firebaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUser } from '@/hooks/useUser';
 import { useToast } from '@/hooks/use-toast';
+
+// Client-side only component - no server-side logic
 
 
 export default function Page() {
@@ -81,21 +83,43 @@ export default function Page() {
       const uid = auth.currentUser.uid;
       console.log('Onboard submit - Creating store for user:', uid);
 
-      // Save to database
-      await fetch('/api/users', {
+      // First ensure user exists in database
+      try {
+        await syncUserWithDatabase(auth.currentUser);
+        console.log('✅ User synchronized with database before store creation');
+      } catch (syncError) {
+        console.error('❌ Failed to sync user before store creation:', syncError);
+        // Continue anyway - the sync might have worked partially
+      }
+
+      // Save store profile to database
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid,
-          firstName,
-          lastName,
+          email: auth.currentUser.email,
+          displayName: `${firstName} ${lastName}`,
+          storeName,
           phoneNumber,
           nationalId,
-          storeName,
           vatNumber,
-          storeProfile: { address, city, country }
+          storeCountry: country,
+          storeCity: city,
+          storeAddress1: address,
+          businessOwnerName: `${firstName} ${lastName}`,
+          businessOwnerEmail: auth.currentUser.email,
+          businessOwnerPhone: phoneNumber
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save store profile');
+      }
+
+      const result = await response.json();
+      console.log('✅ Store profile saved successfully:', result);
 
       // Save to user profile context
       await updateProfile({
@@ -118,10 +142,15 @@ export default function Page() {
         description: "Welcome to your new store dashboard. You can now start managing your business.",
         variant: "default",
       });
-      // go to dashboard
+
+      // Set a flag to indicate we're coming from onboarding to prevent redirect loop
+      sessionStorage.setItem('fromOnboard', 'true');
+
+      // go to dashboard with a longer delay to ensure profile is saved
       setTimeout(() => {
+        console.log('Onboard submit - Redirecting to dashboard after delay');
         window.location.href = '/';
-      }, 1500); // Small delay to show the toast
+      }, 2000); // Longer delay to ensure profile is fully saved
     } catch (e) {
       console.error('Onboard submit - Failed to save:', e);
       toast({

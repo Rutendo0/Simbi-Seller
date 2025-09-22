@@ -1,5 +1,5 @@
-import ProductsPage from "@/vite-pages/Products";
+import ProductsTable from "@/components/ProductsTable";
 
 export default function Page() {
-  return <ProductsPage />;
+  return <ProductsTable />;
 }

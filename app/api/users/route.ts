@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { userOperations, testDatabaseConnection } from '@/lib/database';
+import { userOperations, testDatabaseConnection, userMigration } from '@/lib/database';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const uid = url.searchParams.get('uid');
   const test = url.searchParams.get('test');
+  const migrate = url.searchParams.get('migrate');
 
   try {
     // Health check endpoint
@@ -15,6 +16,25 @@ export async function GET(req: Request) {
         message: connectionTest.message,
         timestamp: new Date().toISOString()
       });
+    }
+
+    // Migration endpoint for syncing existing Firebase users
+    if (migrate === '1') {
+      try {
+        const migrationResult = await userMigration.syncExistingUsersWithDatabase();
+        return NextResponse.json({
+          success: true,
+          message: migrationResult.message,
+          dbUserCount: migrationResult.dbUserCount,
+          timestamp: new Date().toISOString()
+        });
+      } catch (migrationError: any) {
+        console.error('Migration endpoint error:', migrationError);
+        return NextResponse.json({
+          error: 'Migration failed',
+          details: migrationError.message
+        }, { status: 500 });
+      }
     }
 
     // Test database connection first
@@ -73,7 +93,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    console.log('API POST request body:', body);
+
     if (!body || !body.uid || !body.email) {
+      console.error('Missing required fields:', { uid: !!body?.uid, email: !!body?.email });
       return NextResponse.json({
         error: 'Missing required fields: uid and email'
       }, { status: 400 });
@@ -82,6 +105,7 @@ export async function POST(req: Request) {
     // Test database connection first
     const connectionTest = await testDatabaseConnection();
     if (!connectionTest.success) {
+      console.error('Database connection failed:', connectionTest.message);
       return NextResponse.json({
         error: 'Database connection failed',
         details: connectionTest.message,
@@ -134,6 +158,56 @@ export async function POST(req: Request) {
     console.error('Database operation error:', error);
     return NextResponse.json({
       error: 'Database operation failed',
+      details: error.message
+    }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    console.log('API PUT request body:', body);
+
+    if (!body || !body.uid || !body.email) {
+      console.error('Missing required fields:', { uid: !!body?.uid, email: !!body?.email });
+      return NextResponse.json({
+        error: 'Missing required fields: uid and email'
+      }, { status: 400 });
+    }
+
+    // Test database connection first
+    const connectionTest = await testDatabaseConnection();
+    if (!connectionTest.success) {
+      console.error('Database connection failed:', connectionTest.message);
+      return NextResponse.json({
+        error: 'Database connection failed',
+        details: connectionTest.message,
+        fallback: 'Please use localStorage mode for now'
+      }, { status: 503 });
+    }
+
+    // Create user from Firebase data (migration endpoint)
+    const user = await userMigration.createUserFromFirebaseData({
+      uid: body.uid,
+      email: body.email,
+      displayName: body.displayName,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'User migrated successfully',
+      user: {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.display_name,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      }
+    });
+  } catch (error: any) {
+    console.error('Migration operation error:', error);
+    return NextResponse.json({
+      error: 'Migration operation failed',
       details: error.message
     }, { status: 500 });
   }

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { getFirebaseAuth } from '@/lib/firebaseClient';
+import { getFirebaseAuth, syncUserWithDatabase } from '@/lib/firebaseClient';
 
 interface UserProfile {
   uid: string;
@@ -40,6 +40,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     const auth = getFirebaseAuth();
 
     if (!auth) {
@@ -58,6 +64,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (firebaseUser) {
         try {
+          // First, ensure user exists in database
+          await syncUserWithDatabase(firebaseUser);
+
+          // Check if we're coming from onboarding - if so, add extra delay for database sync
+          const fromOnboard = typeof window !== 'undefined' && sessionStorage.getItem('fromOnboard');
+          if (fromOnboard) {
+            console.log('useUser - Coming from onboarding, adding extra delay for database sync');
+            sessionStorage.removeItem('fromOnboard');
+            // Add extra delay to allow database to sync
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+
           // Try to load profile from API/database
           const response = await fetch(`/api/users?uid=${firebaseUser.uid}`);
           const data = await response.json();
@@ -87,7 +105,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setProfile(profileFromDb);
             // Also save to localStorage for immediate access
             localStorage.setItem(`user_profile_${firebaseUser.uid}`, JSON.stringify(profileFromDb));
-            console.log('✅ Profile loaded from database:', firebaseUser.uid);
+            console.log('✅ Profile loaded from database:', firebaseUser.uid, profileFromDb.storeName ? '(with store)' : '(no store)');
           } else {
             // No profile in database, create from Firebase user
             const defaultProfile: UserProfile = {
