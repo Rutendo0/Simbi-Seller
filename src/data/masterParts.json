@@ -1,0 +1,5 @@
+[
+  { "id": "MP-001", "name": "Toyota Hilux Brake Pad", "make": "Toyota", "model": "Hilux", "year": "2005-2015", "sku": "TH-BP-001" },
+  { "id": "MP-002", "name": "Toyota Corolla Air Filter", "make": "Toyota", "model": "Corolla", "year": "2000-2010", "sku": "TC-AF-002" },
+  { "id": "MP-003", "name": "Ford Ranger Headlight", "make": "Ford", "model": "Ranger", "year": "2010-2020", "sku": "FR-HL-003" }
+]

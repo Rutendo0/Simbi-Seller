@@ -1,0 +1,22 @@
+"use strict";
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+(self["webpackChunk_N_E"] = self["webpackChunk_N_E"] || []).push([["_app-pages-browser_src_data_mockOrders_json"],{
+
+/***/ "(app-pages-browser)/./src/data/mockOrders.json":
+/*!**********************************!*\
+  !*** ./src/data/mockOrders.json ***!
+  \**********************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+module.exports = /*#__PURE__*/JSON.parse('[{"id":"O-2025-1001","items":[{"productId":"P-1","quantity":2,"price":50}],"total":100,"status":"Completed","createdAt":"2025-09-18T10:15:00Z","fulfillmentHours":12},{"id":"O-2025-1002","items":[{"productId":"P-2","quantity":1,"price":156}],"total":156,"status":"Processing","createdAt":"2025-09-17T12:00:00Z","fulfillmentHours":30},{"id":"O-2025-1003","items":[{"productId":"P-3","quantity":3,"price":128}],"total":384,"status":"Completed","createdAt":"2025-09-10T09:00:00Z","fulfillmentHours":20},{"id":"O-2025-1004","items":[{"productId":"P-2","quantity":2,"price":156}],"total":312,"status":"Shipped","createdAt":"2025-08-25T11:30:00Z","fulfillmentHours":15},{"id":"O-2024-2001","items":[{"productId":"P-1","quantity":1,"price":48}],"total":48,"status":"Completed","createdAt":"2024-09-15T09:30:00Z","fulfillmentHours":10},{"id":"O-2024-2002","items":[{"productId":"P-3","quantity":2,"price":120}],"total":240,"status":"Cancelled","createdAt":"2024-09-20T14:00:00Z","fulfillmentHours":0},{"id":"O-2024-2003","items":[{"productId":"P-2","quantity":5,"price":150}],"total":750,"status":"Completed","createdAt":"2024-08-30T10:00:00Z","fulfillmentHours":8},{"id":"O-2023-3001","items":[{"productId":"P-1","quantity":4,"price":45}],"total":180,"status":"Completed","createdAt":"2023-09-12T11:00:00Z","fulfillmentHours":20},{"id":"O-2023-3002","items":[{"productId":"P-4","quantity":2,"price":200}],"total":400,"status":"Refunded","createdAt":"2023-09-25T16:00:00Z","fulfillmentHours":0}]');
+
+/***/ })
+
+}]);
